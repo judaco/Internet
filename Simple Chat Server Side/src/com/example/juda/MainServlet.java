@@ -14,14 +14,14 @@ import java.util.Map;
 public class MainServlet extends javax.servlet.http.HttpServlet {
 
     //private String message;
-    private List<String> messages;
+    private List<Message> messages;
     private Map<String, String> users;
 
 
     @Override
     public void init() throws ServletException {//set once, first request to any client from the Server - will set up to all http requests - used as constructor
         //message = "no message";
-        messages = new ArrayList<>();
+        messages = new ArrayList<Message>();
         users = new HashMap<>();
     }
 
@@ -58,40 +58,59 @@ public class MainServlet extends javax.servlet.http.HttpServlet {
             return;
         switch (action) {
             case "signup":
-                boolean success = false;//will the sign up will succeed or not
-                synchronized (users){
-                    if (!users.containsKey(userName)){
+                boolean success = false;
+                synchronized (users) {
+                    if (!users.containsKey(userName)) {
                         users.put(userName, password);
                         success = true;
                     }
                 }
                 response.getWriter().write(success ? "ok" : "error");
                 break;
+            case "login":
+                response.getWriter().write(
+                        login(userName,password) ? "ok" : "error");
+                break;
             case "send":
-                String newMessage = qs.get("message");//pull by key message
-                if (newMessage != null) {
-                    //this.message = newMessage;//for String
-                    messages.add(newMessage);//for ListView
-                    response.getWriter().write("OK");
+                if(!login(userName,password))
+                    return;
+                String newMessage = qs.get("message");
+                if(newMessage != null) {
+                    messages.add(new Message(newMessage, userName));
+                    response.getWriter().write("ok");
                 }
                 break;
-            case "check":
-                    String from = qs.get("from");
-                    if (from != null){
-                        try {
-                            int fromMessage = Integer.valueOf(from);
-                            StringBuilder stringBuilder = new StringBuilder();
-                            for (int i = fromMessage; i < messages.size(); i++) {
-                                stringBuilder.append(messages.get(i)+ "&");
-                            }
-                            if (stringBuilder.length() > 0)
-                                stringBuilder.deleteCharAt(stringBuilder.length()-1);
-                response.getWriter().write(stringBuilder.toString());
-        }catch (Exception ex){
+            case  "check":
+                if(!login(userName,password))
+                    return;
+                String from = qs.get("from");
+                if(from != null){
+                    try{
+                        int fromMessage = Integer.valueOf(from);
+                        StringBuilder stringBuilder = new StringBuilder();
+                        for (int i = fromMessage; i < messages.size(); i++) {
+                            stringBuilder.append(messages.get(i).toString() + "&");
+                        }
+                        if(stringBuilder.length() > 0) {
+                            stringBuilder
+                                    .deleteCharAt
+                                            (stringBuilder.length() - 1);
+                            response.getWriter()
+                                    .write(stringBuilder.toString());
+                        }
 
-             }
-           }
-       break;
-      }
+                    }catch (Exception ex){
+
+                    }
+                }
+                break;
+        }
+
     }
+    private boolean login(String userName, String password){
+        String existingPassword = users.get(userName);
+        return existingPassword != null &&
+                existingPassword.equals(password);
+    }
+
 }
