@@ -2,6 +2,8 @@ package com.example.juda;
 
 import javax.servlet.ServletException;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -26,7 +28,18 @@ public class MainServlet extends javax.servlet.http.HttpServlet {
     }
 
     protected void doPost(javax.servlet.http.HttpServletRequest request, javax.servlet.http.HttpServletResponse response) throws javax.servlet.ServletException, IOException {
-
+        InputStream inputStream = request.getInputStream();
+        OutputStream outputStream = response.getOutputStream();
+        byte[] buffer = new byte[256];
+        int actuallyRead;
+        StringBuilder stringBuilder = new StringBuilder();
+        while((actuallyRead = inputStream.read(buffer)) != -1){
+            stringBuilder.append(new String(buffer, 0, actuallyRead));
+        }
+        outputStream.write("ok".getBytes());
+        inputStream.close();
+        outputStream.close();
+        System.out.println(stringBuilder.toString());
     }
     //what is a URL (uniform resource locator)
     //http://www.mywebsite.com:80/path/path?key1=value1&key2=value2
